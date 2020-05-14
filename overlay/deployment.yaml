@@ -1,0 +1,28 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: skeleton
+spec:
+  replicas: 1
+  template:
+    spec:
+      volumes:
+        - name: certificates
+          secret:
+            items:
+              - {key: tls.key, path: proxykey}
+              - {key: tls.crt, path: proxycert}
+            secretName: foo.cert
+        - name: tls-dhparam-config
+          secret:
+            items:
+              - {key: dhparam, path: dhparam}
+            secretName: skeleton-secrets
+        - name: google-service-account
+          emptyDir: {}
+          # We should be able to use the `replace` directive here, but that seems to be bugged.hostPath:
+          # For now explicitly remove the parent template's secret dict.hostPath:
+          # https://github.com/kubernetes/community/blob/master/contributors/devel/sig-api-machinery/strategic-merge-patch.md#replace-directive
+          # Without doing this, we'd get a stray `secretName` entry here too from the base.
+#          secret: null
+          $patch: replace

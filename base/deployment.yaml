@@ -1,0 +1,36 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: skeleton
+spec:
+  selector:
+    matchLabels:
+      app: skeleton
+  template:
+    spec:
+      containers:
+        - name: ssl-proxy
+          image: nginx-ssl-proxy
+          ports:
+            - {containerPort: 443, name: https, protocol: TCP}
+            - {containerPort: 80, name: http, protocol: TCP}
+          volumeMounts:
+            - {mountPath: /etc/secrets/, name: certificates, readOnly: true}
+            - {mountPath: /etc/dhparam/, name: tls-dhparam-config, readOnly: true}
+            - {mountPath: /app/gunicorn-socket, name: gunicorn-socket-dir, readOnly: false}
+            - {mountPath: /google-application-credentials/, name: google-service-account, readOnly: true}
+
+      volumes:
+        # Placeholder -- overlays must specify this
+        - name: certificates
+        - emptyDir: {}
+          name: gunicorn-socket-dir
+        - name: tls-dhparam-config
+          secret:
+            items:
+              - {key: dhparam, path: dhparam}
+            # Overlays must provide this
+            secretName: ''
+        - name: google-service-account
+          secret:
+            secretName: 'skeleton-service-account'
